@@ -870,14 +870,28 @@ body::before {
 /* ============================================================
    SCROLLBAR
    ============================================================ */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+/* ── Scrollbars ── */
+.contact-list,
+.chat-messages {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 240, 255, 0.25) transparent;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 255, 0.15);
-  border-radius: 2px;
+  background: rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.30);
+  background: rgba(0, 240, 255, 0.45);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 /* ============================================================
