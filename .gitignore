@@ -1,0 +1,9 @@
+wuzapi.exe
+wuzapi/dbdata/
+wuzapi/.env
+go/
+cloudflared.exe
+relay.db
+*.log
+node_modules/
+.wrangler/

@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="neon">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Web — Neon Holographic</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM TOKENS — Neon Holographic (default)
+   ============================================================ */
+:root {
+  --bg-deep:        #02080f;
+  --bg-surface:     rgba(255, 255, 255, 0.04);
+  --bg-elevated:    rgba(255, 255, 255, 0.07);
+  --border-subtle:  rgba(0, 240, 255, 0.12);
+  --border-glow:    rgba(0, 240, 255, 0.30);
+  --accent-cyan:    #00f0ff;
+  --accent-purple:  #7000ff;
+  --accent-pink:    #ff2d95;
+  --text-primary:   #e0f7ff;
+  --text-secondary: #6b8a9e;
+  --text-dim:       #3d5566;
+  --bubble-outgoing:        linear-gradient(135deg, #00f0ff, #7000ff);
+  --bubble-outgoing-text:   #ffffff;
+  --bubble-incoming:        rgba(255, 255, 255, 0.06);
+  --bubble-incoming-border: rgba(0, 240, 255, 0.10);
+  --bubble-incoming-text:   #c8e4f0;
+  --panel-header:      rgba(255, 255, 255, 0.03);
+  --panel-sidebar:     rgba(0, 10, 20, 0.70);
+  --panel-chat:        transparent;
+  --input-bar:         rgba(255, 255, 255, 0.04);
+  --input-border:      rgba(0, 240, 255, 0.20);
+  --input-focus:       rgba(0, 240, 255, 0.40);
+  --blur-glass:        20px;
+  --glow-cyan:         0 0 20px rgba(0, 240, 255, 0.15);
+  --glow-purple:       0 0 30px rgba(112, 0, 255, 0.12);
+  --glow-message:      0 0 12px rgba(0, 240, 255, 0.08);
+  --font-family:       'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:         'JetBrains Mono', 'Fira Code', monospace;
+  --radius-sm:         8px;
+  --radius-md:         14px;
+  --radius-lg:         22px;
+  --radius-full:       999px;
+}
+
+/* ── WhatsApp Classic Dark Theme ── */
+[data-theme="whatsapp"] {
+  --bg-deep:        #0a0a0a;
+  --bg-surface:     #111b21;
+  --bg-elevated:    #1f2c33;
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-glow:    rgba(0, 168, 132, 0.30);
+  --accent-cyan:    #00a884;
+  --accent-purple:  #00a884;
+  --accent-pink:    #e91e63;
+  --text-primary:   #e9edef;
+  --text-secondary: #8696a0;
+  --text-dim:       #54656f;
+  --bubble-outgoing:        #005c4b;
+  --bubble-outgoing-text:   #e9edef;
+  --bubble-incoming:        #1f2c33;
+  --bubble-incoming-border: rgba(255, 255, 255, 0.05);
+  --bubble-incoming-text:   #e9edef;
+  --panel-header:      #111b21;
+  --panel-sidebar:     #111b21;
+  --panel-chat:        transparent;
+  --input-bar:         #111b21;
+  --input-border:      rgba(255, 255, 255, 0.08);
+  --input-focus:       rgba(0, 168, 132, 0.40);
+  --glow-cyan:         0 0 20px rgba(0, 168, 132, 0.15);
+  --glow-purple:       0 0 30px rgba(0, 168, 132, 0.10);
+  --glow-message:      0 0 12px rgba(0, 168, 132, 0.05);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Subtle grid overlay — holographic AR feel */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.018) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="whatsapp"] body::before { display: none; }
+
+/* ============================================================
+   GLASS UTILITIES
+   ============================================================ */
+.glass {
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-elevated {
+  background: var(--bg-elevated);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--border-glow);
+  box-shadow: var(--glow-cyan);
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen { display: none; position: relative; z-index: 1; height: 100vh; }
+.screen--active { display: flex; }
+
+/* ── Screen 1: QR Login ── */
+.qr-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.qr-card {
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+}
+
+.qr-card h2 {
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  margin-bottom: 8px;
+  font-size: 20px;
+}
+
+.qr-card p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.qr-code-wrapper {
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+  display: inline-block;
+  position: relative;
+}
+
+.qr-code-wrapper img {
+  display: block;
+  width: 240px;
+  height: 240px;
+}
+
+.qr-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 8, 15, 0.85);
+  border-radius: var(--radius-md);
+}
+
+.qr-spinner::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.qr-error {
+  color: var(--accent-pink);
+  font-size: 13px;
+  margin-top: 16px;
+  display: none;
+}
+
+.qr-error--visible { display: block; }
+
+.qr-retry-btn {
+  margin-top: 12px;
+  padding: 10px 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--accent-cyan);
+  background: transparent;
+  color: var(--accent-cyan);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qr-retry-btn:hover {
+  background: rgba(0, 240, 255, 0.10);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+/* ── Screen 2: Chat Interface ── */
+.chat-screen {
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  height: 100vh;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  animation: hologramBoot 0.8s ease-out;
+}
+
+/* Sidebar */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--panel-sidebar);
+}
+
+.sidebar-header {
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--panel-header);
+  backdrop-filter: blur(var(--blur-glass));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sidebar-header h3 {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.sidebar-header .status-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.04);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-item:hover {
+  background: var(--bg-elevated);
+}
+
+.contact-item--active {
+  background: rgba(0, 240, 255, 0.08);
+  border-left: 3px solid var(--accent-cyan);
+  box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04);
+}
+
+.contact-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.contact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.contact-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.contact-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.unread-badge {
+  background: var(--accent-pink);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  box-shadow: 0 0 10px rgba(255, 45, 149, 0.4);
+}
+
+/* Chat panel */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-chat);
+}
+
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--panel-header);
+  backdrop-filter: blur(var(--blur-glass));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-header .contact-avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.chat-header .contact-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Load earlier messages button */
+.load-earlier {
+  text-align: center;
+  padding: 8px;
+}
+
+.load-earlier button {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-cyan);
+  padding: 6px 20px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-earlier button:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-glow);
+}
+
+/* Empty state */
+.empty-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  gap: 16px;
+}
+
+.empty-chat .logo {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  opacity: 0.3;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+}
+
+.empty-chat span {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+/* ── Messages ── */
+.message-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 65%;
+  animation-duration: 0.25s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.message-row--outgoing {
+  align-self: flex-end;
+  align-items: flex-end;
+  animation-name: slideInRight;
+}
+
+.message-row--incoming {
+  align-self: flex-start;
+  align-items: flex-start;
+  animation-name: slideInLeft;
+}
+
+.message-bubble {
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.message-row--outgoing .message-bubble {
+  background: var(--bubble-outgoing);
+  color: var(--bubble-outgoing-text);
+  border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.15);
+}
+
+.message-row--incoming .message-bubble {
+  background: var(--bubble-incoming);
+  color: var(--bubble-incoming-text);
+  border: 1px solid var(--bubble-incoming-border);
+  border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+  backdrop-filter: blur(8px);
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.message-ticks {
+  font-size: 12px;
+}
+
+.message-ticks--sent     { color: var(--text-secondary); }
+.message-ticks--delivered { color: var(--text-secondary); }
+.message-ticks--read      { color: var(--accent-cyan); }
+
+/* Timestamp divider */
+.timestamp-divider {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  padding: 12px 0;
+  letter-spacing: 0.5px;
+}
+
+/* ── Typing indicator ── */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px;
+  align-self: flex-start;
+}
+
+.typing-indicator span {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--accent-cyan);
+  animation: typingBounce 1.2s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Chat input bar ── */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--input-bar);
+  backdrop-filter: blur(var(--blur-glass));
+  border-top: 1px solid var(--input-border);
+}
+
+.chat-input-bar input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-full);
+  padding: 12px 20px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.chat-input-bar input::placeholder {
+  color: var(--text-dim);
+}
+
+.chat-input-bar input:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.12);
+}
+
+.send-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.send-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.40);
+}
+
+.send-btn:active { transform: scale(0.95); }
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Screen 3: Disconnected ── */
+.disconnected-screen {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.disconnected-screen h2 {
+  font-weight: 300;
+  color: var(--accent-pink);
+  letter-spacing: 1px;
+}
+
+.disconnected-screen p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.reconnect-btn {
+  padding: 12px 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+  transition: all 0.2s;
+}
+
+.reconnect-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.40);
+}
+
+/* ============================================================
+   STATUS DOT
+   ============================================================ */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.status-dot--connected    { background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+.status-dot--connecting   { background: #ffb800; box-shadow: 0 0 8px #ffb800; animation: pulse 1s infinite; }
+.status-dot--disconnected { background: #ff2d95; box-shadow: 0 0 8px #ff2d95; }
+
+/* Connection banner */
+.connection-banner {
+  display: none;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  background: rgba(255, 45, 149, 0.12);
+  color: var(--accent-pink);
+  border-bottom: 1px solid rgba(255, 45, 149, 0.2);
+}
+
+.connection-banner--visible { display: block; }
+
+/* ============================================================
+   HEADER ACTIONS
+   ============================================================ */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle,
+.logout-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover,
+.logout-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-glow);
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.15);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.30);
+}
+
+/* ============================================================
+   SKELETON LOADING
+   ============================================================ */
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.04);
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line--short { width: 60%; }
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.8; }
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes hologramBoot {
+  0%   { opacity: 0; filter: blur(8px) hue-rotate(90deg); }
+  30%  { opacity: 0.6; filter: blur(2px) hue-rotate(30deg); }
+  60%  { opacity: 0.9; filter: blur(0px) hue-rotate(-5deg); }
+  100% { opacity: 1; filter: blur(0px) hue-rotate(0deg); }
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+  30%           { transform: translateY(-8px); opacity: 1; }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .sidebar--visible { display: flex; position: absolute; inset: 0; z-index: 10; }
+  .chat-panel { width: 100%; }
+  .back-btn { display: flex !important; }
+}
+
+.back-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SCREEN 1: QR LOGIN
+     ============================================================ -->
+<div id="qr-screen" class="screen screen--active qr-screen">
+  <div class="qr-card glass-elevated">
+    <h2>🔗 Link WhatsApp</h2>
+    <p>Scan the QR code with your phone to connect.<br>
+       <small>WhatsApp → Settings → Linked Devices → Link a Device</small></p>
+    <div class="qr-code-wrapper" id="qr-wrapper">
+      <img id="qr-image" src="" alt="QR Code" style="display:none;">
+      <div class="qr-spinner" id="qr-spinner"></div>
+    </div>
+    <div class="qr-error" id="qr-error">Unable to load QR code. Please try again.</div>
+    <button class="qr-retry-btn" id="qr-retry-btn" style="display:none;">⟳ Retry</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 2: CHAT INTERFACE
+     ============================================================ -->
+<div id="chat-screen" class="screen chat-screen">
+  <div class="connection-banner" id="connection-banner">
+    ⬤ Connecting to WhatsApp...
+  </div>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>💬 Chats</h3>
+        <div class="header-actions">
+          <span class="status-dot" id="status-dot" title="Connection status"></span>
+          <button class="theme-toggle" id="theme-toggle" title="Toggle theme">🎨</button>
+          <button class="logout-btn" id="logout-btn" title="Disconnect">⏻</button>
+        </div>
+      </div>
+      <ul class="contact-list" id="contact-list">
+        <!-- Skeleton loaders -->
+        <li class="skeleton-row"><div class="skeleton-avatar"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line skeleton-line--short"></div></div></li>
+        <li class="skeleton-row"><div class="skeleton-avatar"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line skeleton-line--short"></div></div></li>
+        <li class="skeleton-row"><div class="skeleton-avatar"></div><div class="skeleton-text"><div class="skeleton-line"></div><div class="skeleton-line skeleton-line--short"></div></div></li>
+      </ul>
+    </aside>
+
+    <!-- Chat panel -->
+    <main class="chat-panel" id="chat-panel">
+      <!-- Header -->
+      <div class="chat-header" id="chat-header" style="display:none;">
+        <button class="back-btn" id="back-btn">←</button>
+        <div class="contact-avatar" id="chat-avatar">?</div>
+        <span class="contact-name" id="chat-name">Select a conversation</span>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-chat" id="empty-chat">
+        <div class="logo">💬</div>
+        <span>Select a conversation</span>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages" id="chat-messages" style="display:none;"></div>
+
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typing-indicator" style="display:none;">
+        <span></span><span></span><span></span>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-bar" id="chat-input-bar" style="display:none;">
+        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" id="send-btn" disabled>▶</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN 3: DISCONNECTED / ERROR
+     ============================================================ -->
+<div id="disconnected-screen" class="screen disconnected-screen">
+  <h2>⚡ Connection Lost</h2>
+  <p>Your WhatsApp session has been disconnected.</p>
+  <button class="reconnect-btn" id="reconnect-btn">⟳ Reconnect</button>
+</div>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script>
+/* ============================================================
+   CONFIGURATION
+   ============================================================ */
+const WUZAPI_BASE = 'http://localhost:8080';
+const USER_TOKEN  = 'chat-user-token-123';
+const ADMIN_TOKEN = 'my-admin-secret-token';
+const INITIAL_LOAD_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+const POLL_INTERVAL_MS = 3000;  // Poll every 3 seconds
+const QR_POLL_INTERVAL_MS = 2000;
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  connected: false,
+  activeContactJid: null,
+  myJid: null,             // Our own WhatsApp JID (set after login)
+  contacts: [],            // [{jid, name, lastMsg, lastTime, unread}]
+  messages: {},            // { jid: [{id, fromMe, text, timestamp, status}] }
+  lastMessageId: null,
+  theme: 'neon',
+  historyCursor: {},       // { jid: oldestTimestamp } for pagination
+};
+
+/* ============================================================
+   DOM REFS
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const screens = {
+  qr:           $('#qr-screen'),
+  chat:         $('#chat-screen'),
+  disconnected: $('#disconnected-screen'),
+};
+
+const els = {
+  qrImage:         $('#qr-image'),
+  qrSpinner:       $('#qr-spinner'),
+  qrError:         $('#qr-error'),
+  qrRetryBtn:      $('#qr-retry-btn'),
+  contactList:     $('#contact-list'),
+  chatHeader:      $('#chat-header'),
+  chatAvatar:      $('#chat-avatar'),
+  chatName:        $('#chat-name'),
+  emptyChat:       $('#empty-chat'),
+  chatMessages:    $('#chat-messages'),
+  chatInputBar:    $('#chat-input-bar'),
+  messageInput:    $('#message-input'),
+  sendBtn:         $('#send-btn'),
+  typingIndicator: $('#typing-indicator'),
+  statusDot:       $('#status-dot'),
+  connectionBanner:$('#connection-banner'),
+  themeToggle:     $('#theme-toggle'),
+  logoutBtn:       $('#logout-btn'),
+  backBtn:         $('#back-btn'),
+  reconnectBtn:    $('#reconnect-btn'),
+};
+
+/* ============================================================
+   SCREEN SWITCHING
+   ============================================================ */
+function showScreen(name) {
+  Object.entries(screens).forEach(([key, el]) => {
+    el.classList.toggle('screen--active', key === name);
+  });
+}
+
+/* ============================================================
+   STATUS INDICATORS
+   ============================================================ */
+function setConnectionStatus(status) {
+  els.statusDot.className = 'status-dot';
+  if (status === 'connected') {
+    els.statusDot.classList.add('status-dot--connected');
+    els.statusDot.title = 'Connected';
+    els.connectionBanner.classList.remove('connection-banner--visible');
+    state.connected = true;
+  } else if (status === 'connecting') {
+    els.statusDot.classList.add('status-dot--connecting');
+    els.statusDot.title = 'Connecting…';
+    els.connectionBanner.classList.add('connection-banner--visible');
+    state.connected = false;
+  } else {
+    els.statusDot.classList.add('status-dot--disconnected');
+    els.statusDot.title = 'Disconnected';
+    state.connected = false;
+  }
+}
+
+/* ============================================================
+   API HELPERS
+   ============================================================ */
+async function wuzapi(path, options = {}) {
+  const url = `${WUZAPI_BASE}${path}`;
+  const headers = {
+    'token': USER_TOKEN,
+    ...(options.headers || {}),
+  };
+  // Don't set Content-Type for GET/HEAD requests without a body
+  if (!options.method || options.method === 'GET') {
+    // no Content-Type needed
+  } else if (!headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`WuzAPI ${response.status}: ${text}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+  return response;
+}
+
+/* ============================================================
+   SCREEN 1: QR LOGIN
+   ============================================================ */
+async function startQRSession() {
+  els.qrImage.style.display = 'none';
+  els.qrSpinner.style.display = 'flex';
+  els.qrError.classList.remove('qr-error--visible');
+  els.qrRetryBtn.style.display = 'none';
+  setConnectionStatus('connecting');
+
+  try {
+    // Step 1: Check current status — only connect if not already connected
+    let status = await wuzapi('/session/status');
+    const alreadyConnected = status && status.success && status.data && status.data.connected;
+
+    if (!alreadyConnected) {
+      try {
+        await wuzapi('/session/connect', {
+          method: 'POST',
+          body: JSON.stringify({ Subscribe: ['Message', 'ReadReceipt', 'HistorySync', 'ChatPresence'], Immediate: true }),
+        });
+      } catch (connectErr) {
+        // If "already connected", that's fine — continue to QR
+        if (!connectErr.message.includes('already connected')) {
+          throw connectErr;
+        }
+      }
+    }
+
+    // Step 2: Poll for QR code
+    const qrLoaded = await pollForQR();
+    if (!qrLoaded) return;
+
+    // Step 3: Poll for connection (wait for phone scan)
+    await pollForConnection();
+
+    // Step 4: Connected — load data and show chat
+    await onConnected();
+  } catch (err) {
+    console.error('QR session error:', err);
+    els.qrSpinner.style.display = 'none';
+    els.qrError.classList.add('qr-error--visible');
+    els.qrRetryBtn.style.display = 'inline-block';
+    setConnectionStatus('disconnected');
+  }
+}
+
+async function pollForQR() {
+  // WuzAPI returns { code: 200, data: { QRCode: "data:image/png;base64,..." }, success: true }
+  for (let i = 0; i < 15; i++) {
+    try {
+      const response = await wuzapi('/session/qr');
+      if (response && response.success && response.data && response.data.QRCode) {
+        // QRCode is a data URI: "data:image/png;base64,iVBORw0KG..."
+        els.qrImage.src = response.data.QRCode;
+        els.qrImage.style.display = 'block';
+        els.qrSpinner.style.display = 'none';
+        return true;
+      }
+    } catch (e) {
+      // QR not ready yet, keep polling
+    }
+    await sleep(QR_POLL_INTERVAL_MS);
+  }
+
+  els.qrSpinner.style.display = 'none';
+  els.qrError.classList.add('qr-error--visible');
+  els.qrRetryBtn.style.display = 'inline-block';
+  return false;
+}
+
+async function pollForConnection() {
+  // WuzAPI returns { code: 200, data: { Connected: true/false, LoggedIn: true/false }, success: true }
+  for (let i = 0; i < 60; i++) { // up to 2 minutes
+    try {
+      const response = await wuzapi('/session/status');
+      if (response && response.success && response.data && response.data.loggedIn) {
+        return true;
+      }
+    } catch (e) {
+      // keep polling
+    }
+    await sleep(QR_POLL_INTERVAL_MS);
+  }
+  throw new Error('QR scan timed out');
+}
+
+/* ============================================================
+   SCREEN 2: CHAT INTERFACE
+   ============================================================ */
+async function onConnected() {
+  setConnectionStatus('connected');
+  showScreen('chat');
+
+  // Capture our own JID from status (needed for fromMe detection)
+  try {
+    const status = await wuzapi('/session/status');
+    if (status && status.success && status.data && status.data.jid) {
+      state.myJid = status.data.jid;
+    }
+  } catch (e) {}
+
+  // Enable message history so WuzAPI stores messages
+  try {
+    await wuzapi('/session/history', {
+      method: 'POST',
+      body: JSON.stringify({ history: true }),
+    });
+  } catch (e) {
+    console.warn('History enable warning:', e.message);
+  }
+
+  // Load contacts
+  await loadContacts();
+
+  // Start message polling
+  startMessagePolling();
+}
+
+async function loadContacts() {
+  try {
+    // WuzAPI returns { data: { JID: { PushName, FullName, Found }, ... } }
+    const response = await wuzapi('/user/contacts');
+    const data = response && response.data ? response.data : {};
+
+    state.contacts = Object.entries(data)
+      .filter(([jid]) => jid && jid.includes('@')) // filter out any non-JID keys
+      .map(([jid, info]) => ({
+        jid:      jid,
+        name:     info.PushName || info.FullName || info.BusinessName || formatPhone(jid),
+        lastMsg:  '',
+        lastTime: '',
+        unread:   0,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    renderContactList();
+
+    // Auto-select first contact if none selected
+    if (state.contacts.length > 0 && !state.activeContactJid) {
+      selectContact(state.contacts[0].jid);
+    }
+  } catch (err) {
+    console.error('Failed to load contacts:', err);
+    state.contacts = [];
+    renderContactList();
+  }
+}
+
+function renderContactList() {
+  els.contactList.innerHTML = '';
+
+  if (state.contacts.length === 0) {
+    els.contactList.innerHTML = `
+      <li style="padding:24px;text-align:center;color:var(--text-dim);font-size:13px;">
+        No conversations yet
+      </li>`;
+    return;
+  }
+
+  state.contacts.forEach(contact => {
+    const li = document.createElement('li');
+    li.className = 'contact-item';
+    if (state.activeContactJid === contact.jid) {
+      li.classList.add('contact-item--active');
+    }
+    li.innerHTML = `
+      <div class="contact-avatar">${getInitials(contact.name)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${escapeHtml(contact.name)}</div>
+        <div class="contact-preview">${escapeHtml(contact.lastMsg || '')}</div>
+      </div>
+      <div class="contact-meta">
+        <span class="contact-time">${formatTime(contact.lastTime)}</span>
+        ${contact.unread ? `<span class="unread-badge">${contact.unread}</span>` : ''}
+      </div>`;
+    li.addEventListener('click', () => selectContact(contact.jid));
+    els.contactList.appendChild(li);
+  });
+}
+
+async function selectContact(jid) {
+  state.activeContactJid = jid;
+  state.lastMessageId = null;
+
+  // Update UI
+  renderContactList();
+
+  // Show chat panel
+  els.emptyChat.style.display = 'none';
+  els.chatMessages.style.display = 'flex';
+  els.chatInputBar.style.display = 'flex';
+  els.chatHeader.style.display = 'flex';
+
+  // Update header
+  const contact = state.contacts.find(c => c.jid === jid);
+  if (contact) {
+    els.chatName.textContent = contact.name;
+    els.chatAvatar.textContent = getInitials(contact.name);
+  } else {
+    els.chatName.textContent = formatJid(jid);
+    els.chatAvatar.textContent = getInitials(formatJid(jid));
+  }
+
+  // Render messages
+  renderMessages(jid);
+
+  // Load chat history from WuzAPI (filtered to 3-hour window)
+  await loadChatHistory(jid);
+
+  // Scroll to bottom
+  scrollToBottom();
+
+  // Enable input
+  els.messageInput.disabled = false;
+  els.sendBtn.disabled = false;
+  els.messageInput.focus();
+
+  // On mobile, show chat panel
+  if (window.innerWidth <= 768) {
+    $('#sidebar').classList.remove('sidebar--visible');
+  }
+}
+
+function renderMessages(jid) {
+  els.chatMessages.innerHTML = '';
+  const messages = state.messages[jid] || [];
+
+  if (messages.length === 0) {
+    els.chatMessages.innerHTML = `
+      <div style="text-align:center;color:var(--text-dim);padding:40px;font-size:13px;">
+        No recent messages in the last 3 hours
+      </div>`;
+    return;
+  }
+
+  let lastTimestamp = null;
+
+  messages.forEach(msg => {
+    // Timestamp divider (gap > 5 min)
+    const msgTime = new Date(msg.timestamp).getTime();
+    if (!lastTimestamp || (msgTime - lastTimestamp) > 5 * 60 * 1000) {
+      const divider = document.createElement('div');
+      divider.className = 'timestamp-divider';
+      divider.textContent = formatDate(msg.timestamp);
+      els.chatMessages.appendChild(divider);
+    }
+    lastTimestamp = msgTime;
+
+    // Message row
+    const row = document.createElement('div');
+    row.className = `message-row ${msg.fromMe ? 'message-row--outgoing' : 'message-row--incoming'}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = msg.text;
+
+    const meta = document.createElement('div');
+    meta.className = 'message-meta';
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'message-time';
+    timeSpan.textContent = formatTime(msg.timestamp);
+
+    meta.appendChild(timeSpan);
+
+    if (msg.fromMe) {
+      const ticks = document.createElement('span');
+      ticks.className = 'message-ticks';
+      if (msg.status === 'read') {
+        ticks.classList.add('message-ticks--read');
+        ticks.textContent = '✓✓';
+      } else if (msg.status === 'delivered') {
+        ticks.classList.add('message-ticks--delivered');
+        ticks.textContent = '✓✓';
+      } else {
+        ticks.classList.add('message-ticks--sent');
+        ticks.textContent = '✓';
+      }
+      meta.appendChild(ticks);
+    }
+
+    row.appendChild(bubble);
+    row.appendChild(meta);
+    els.chatMessages.appendChild(row);
+  });
+
+  scrollToBottom();
+}
+
+async function loadChatHistory(jid) {
+  try {
+    // WuzAPI built-in history: GET /chat/history?chat_jid=...&limit=...
+    const response = await wuzapi(`/chat/history?chat_jid=${encodeURIComponent(jid)}&limit=100`);
+
+    let rawMessages = [];
+    if (Array.isArray(response)) {
+      rawMessages = response;
+    } else if (response && Array.isArray(response.data)) {
+      rawMessages = response.data;
+    } else if (response && response.data && Array.isArray(response.data.messages)) {
+      rawMessages = response.data.messages;
+    }
+
+    // Normalize — WuzAPI returns snake_case: {id, user_id, chat_jid, sender_jid, message_id, timestamp, message_type, text_content, media_link}
+    const normalized = rawMessages
+      .map(m => ({
+        id:        m.message_id || '',
+        fromMe:    state.myJid ? m.sender_jid === state.myJid : false,
+        text:      m.text_content || '',
+        timestamp: m.timestamp || '',
+        jid:       m.chat_jid || jid,
+        status:    'delivered',
+      }))
+      .filter(m => m.text)
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    // Apply 3-hour window
+    const cutoff = Date.now() - INITIAL_LOAD_WINDOW_MS;
+    const filtered = normalized.filter(m => new Date(m.timestamp).getTime() > cutoff);
+
+    state.messages[jid] = filtered;
+    renderMessages(jid);
+    scrollToBottom();
+  } catch (err) {
+    console.error('Failed to load chat history:', err);
+    if (!state.messages[jid]) {
+      state.messages[jid] = [];
+    }
+    renderMessages(jid);
+  }
+}
+
+function normalizeMessage(raw, fallbackJid) {
+  // Handle various WuzAPI message shapes
+  try {
+    const info = raw.Info || raw.info || {};
+    const message = raw.Message || raw.message || {};
+    const text = message.Conversation || message.conversation || message.Text || message.text || '';
+    const id = info.ID || info.id || raw.ID || raw.id || Date.now().toString();
+    const timestamp = info.Timestamp || info.timestamp || raw.Timestamp || raw.timestamp || new Date().toISOString();
+    const fromMe = !!(info.MessageSource?.IsFromMe || info.isFromMe || raw.IsFromMe || raw.isFromMe);
+    const senderJid = info.MessageSource?.Sender || info.sender || raw.Sender || raw.sender || fallbackJid;
+
+    return {
+      id,
+      fromMe,
+      text,
+      timestamp,
+      jid: senderJid,
+      status: 'delivered', // default; webhooks will update
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ============================================================
+   MESSAGE SENDING
+   ============================================================ */
+async function sendMessage() {
+  const text = els.messageInput.value.trim();
+  if (!text || !state.activeContactJid) return;
+
+  const jid = state.activeContactJid;
+
+  // Optimistic UI — add message immediately
+  const optimisticMsg = {
+    id: `opt-${Date.now()}`,
+    fromMe: true,
+    text,
+    timestamp: new Date().toISOString(),
+    jid,
+    status: 'sent',
+  };
+
+  if (!state.messages[jid]) state.messages[jid] = [];
+  state.messages[jid].push(optimisticMsg);
+  renderMessages(jid);
+  scrollToBottom();
+  els.messageInput.value = '';
+  els.messageInput.focus();
+
+  // Update contact preview
+  updateContactPreview(jid, text);
+
+  // Send via WuzAPI — /chat/send/text with { Phone, Body, Id }
+  try {
+    const phone = extractPhone(jid);
+    const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+    const result = await wuzapi('/chat/send/text', {
+      method: 'POST',
+      body: JSON.stringify({ Phone: phone, Body: text, Id: msgId }),
+    });
+
+    // Update optimistic message with real ID from response
+    if (result && result.success && result.data && result.data.Id) {
+      optimisticMsg.id = result.data.Id;
+    }
+    optimisticMsg.status = 'delivered';
+    renderMessages(jid);
+  } catch (err) {
+    console.error('Failed to send message:', err);
+    optimisticMsg.status = 'sent';
+    renderMessages(jid);
+  }
+}
+
+function updateContactPreview(jid, text) {
+  const contact = state.contacts.find(c => c.jid === jid);
+  if (contact) {
+    contact.lastMsg = text;
+    contact.lastTime = new Date().toISOString();
+  }
+  renderContactList();
+}
+
+/* ============================================================
+   MESSAGE POLLING
+   ============================================================ */
+let pollingInterval = null;
+
+function startMessagePolling() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(pollNewMessages, POLL_INTERVAL_MS);
+}
+
+function stopMessagePolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+}
+
+async function pollNewMessages() {
+  if (!state.connected) return;
+
+  try {
+    // Check session status
+    const status = await wuzapi('/session/status');
+    if (status && status.success && status.data && !status.data.loggedIn) {
+      handleDisconnect();
+      return;
+    }
+
+    // Periodically refresh contacts (every 30s — every 10th poll)
+    if (!pollNewMessages._count) pollNewMessages._count = 0;
+    pollNewMessages._count++;
+    if (pollNewMessages._count % 10 === 0) {
+      await loadContacts();
+    }
+
+    // If we have an active chat, poll relay for new messages
+    if (state.activeContactJid) {
+      await loadChatHistory(state.activeContactJid);
+    }
+  } catch (err) {
+    console.error('Poll error:', err);
+    if (err.message.includes('NetworkError') || err.message.includes('Failed to fetch')) {
+      els.connectionBanner.classList.add('connection-banner--visible');
+      els.connectionBanner.textContent = '⬤ Connecting to WhatsApp...';
+    }
+  }
+}
+
+/* ============================================================
+   DISCONNECT HANDLING
+   ============================================================ */
+function handleDisconnect() {
+  stopMessagePolling();
+  setConnectionStatus('disconnected');
+  showScreen('disconnected');
+}
+
+async function reconnect() {
+  showScreen('qr');
+  await startQRSession();
+}
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'neon' ? 'whatsapp' : 'neon';
+  html.setAttribute('data-theme', next);
+  state.theme = next;
+  els.themeToggle.textContent = next === 'neon' ? '🎨' : '🌙';
+  localStorage.setItem('whatsapp-web-theme', next);
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('whatsapp-web-theme') || 'neon';
+  document.documentElement.setAttribute('data-theme', saved);
+  state.theme = saved;
+  els.themeToggle.textContent = saved === 'neon' ? '🎨' : '🌙';
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+}
+
+function extractPhone(jid) {
+  // "12145785261@s.whatsapp.net" → "12145785261"
+  // "103586038034566@lid" → "103586038034566"
+  if (!jid) return '';
+  const match = jid.match(/^([^@]+)@/);
+  return match ? match[1] : jid;
+}
+
+function formatPhone(jid) {
+  if (!jid) return 'Unknown';
+  const phone = extractPhone(jid);
+  // If it's all digits, format nicely
+  if (/^\d+$/.test(phone)) {
+    if (phone.length > 10) {
+      return `+${phone.substring(0, 2)} ${phone.substring(2, 3)} ${phone.substring(3, 5)} ${phone.substring(5, 9)}-${phone.substring(9)}`;
+    }
+    return `+${phone}`;
+  }
+  return phone;
+}
+
+function formatJid(jid) {
+  return formatPhone(jid);
+}
+
+function formatTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) return 'Today';
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    els.chatMessages.scrollTop = els.chatMessages.scrollHeight;
+  });
+}
+
+/* ============================================================
+   EVENT BINDINGS
+   ============================================================ */
+// Send message
+els.sendBtn.addEventListener('click', sendMessage);
+els.messageInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Enable send button when there's text
+els.messageInput.addEventListener('input', () => {
+  els.sendBtn.disabled = !els.messageInput.value.trim();
+});
+
+// Theme toggle
+els.themeToggle.addEventListener('click', toggleTheme);
+
+// Logout
+els.logoutBtn.addEventListener('click', async () => {
+  stopMessagePolling();
+  try { await wuzapi('/session/disconnect', { method: 'POST' }); } catch (e) {}
+  handleDisconnect();
+});
+
+// Reconnect
+els.reconnectBtn.addEventListener('click', reconnect);
+
+// QR retry
+els.qrRetryBtn.addEventListener('click', startQRSession);
+
+// Back button (mobile)
+els.backBtn.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    $('#sidebar').classList.add('sidebar--visible');
+    els.emptyChat.style.display = 'flex';
+    els.chatMessages.style.display = 'none';
+    els.chatInputBar.style.display = 'none';
+    els.chatHeader.style.display = 'none';
+  }
+});
+
+// Keyboard shortcut: Escape to deselect chat
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.activeContactJid) {
+    state.activeContactJid = null;
+    renderContactList();
+    els.emptyChat.style.display = 'flex';
+    els.chatMessages.style.display = 'none';
+    els.chatInputBar.style.display = 'none';
+    els.chatHeader.style.display = 'none';
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init() {
+  loadTheme();
+
+  // Check if already connected
+  try {
+    const status = await wuzapi('/session/status');
+    if (status && status.success && status.data && status.data.loggedIn) {
+      await onConnected();
+      return;
+    }
+  } catch (e) {
+    // Not connected or WuzAPI not running — show QR screen
+  }
+
+  // Start QR login flow
+  await startQRSession();
+}
+
+// Wait for DOM then init
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
